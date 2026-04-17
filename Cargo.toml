@@ -1,0 +1,12 @@
+[package]
+name = "payment-processor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+async-trait = "0.1.89"
+csv = "1.4.0"
+rust_decimal = "1.41.0"
+serde = "1.0.228"
+tokio = { version = "1.52.1", features = ["rt", "rt-multi-thread", "macros", "sync"] }
