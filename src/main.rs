@@ -28,15 +28,32 @@ async fn main() {
 
     let processor_task = tokio::spawn(async move {
         while let Some(transaction) = receiver.recv().await {
-            payment_processor.process_transaction(transaction).await.unwrap();
+            let result = payment_processor.process_transaction(transaction).await;
+
+            if let Err(e) = result {
+                eprintln!("Error while processing transaction: {}", e);
+            }
         }
     });
 
     tokio::task::spawn(async move {
-        for record in csv_reader.deserialize() {
-            let record: RawTransaction = record.unwrap();
+        for record in csv_reader.deserialize::<RawTransaction>() {
+            let record = record
+                .map_err(anyhow::Error::msg)
+                .and_then(|r| r.to_transaction());
 
-            sender.send(record.to_transaction().unwrap()).await.unwrap();
+            match record {
+                Ok(transaction) => {
+                    let send_result = sender.send(transaction).await;
+
+                    if let Err(e) = send_result {
+                        eprintln!("Error while sending transaction: {}", e);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error while parsing transaction: {}", e);
+                }
+            }
         }
     }).await.unwrap();
 
