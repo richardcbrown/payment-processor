@@ -1,42 +1,9 @@
 use std::collections::HashMap;
 use std::sync::{Arc};
 use tokio::sync::RwLock;
-use rust_decimal::Decimal;
 use async_trait::async_trait;
-use rust_decimal::prelude::Zero;
 use anyhow::Result;
-use serde::Serialize;
-
-#[derive(Clone, Serialize)]
-pub struct Account {
-    pub client_id: u16,
-    pub available: Decimal,
-    pub held: Decimal,
-    pub locked: bool,
-    pub total: Decimal,
-}
-
-impl Account {
-    pub fn new (client_id: u16) -> Account {
-        Self {
-            client_id,
-            available: Decimal::zero(),
-            held: Decimal::zero(),
-            total: Decimal::zero(),
-            locked: false,
-        }
-    }
-
-    pub fn deposit(&mut self, amount: Decimal) {
-        self.available += amount;
-        self.total += amount;
-    }
-
-    pub fn withdraw(&mut self, amount: Decimal) {
-        self.available -= amount;
-        self.total -= amount;
-    }
-}
+use crate::account::Account;
 
 #[async_trait]
 pub trait AccountRepository {
@@ -50,6 +17,7 @@ pub trait AccountRepository {
 pub struct InMemoryAccountRepository {
    pub accounts: Arc<RwLock<HashMap<u16, Account>>>,
 }
+
 impl InMemoryAccountRepository {
     pub fn new() -> InMemoryAccountRepository {
         Self {

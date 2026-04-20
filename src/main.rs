@@ -3,10 +3,13 @@ use std::sync::Arc;
 use crate::account_repository::{AccountRepository, InMemoryAccountRepository};
 use crate::payment_processor::PaymentProcessor;
 use crate::transaction::{RawTransaction, Transaction};
+use crate::transaction_repository::{InMemoryTransactionRepository, TransactionRepository};
 
 mod payment_processor;
 mod account_repository;
 mod transaction;
+mod transaction_repository;
+mod account;
 
 #[tokio::main]
 async fn main() {
@@ -19,8 +22,9 @@ async fn main() {
     let (sender, mut receiver) = tokio::sync::mpsc::channel::<Transaction>(1000);
 
     let account_repository: Arc<dyn AccountRepository + Send + Sync> = Arc::new(InMemoryAccountRepository::new());
+    let transaction_repository: Arc<dyn TransactionRepository + Send + Sync> = Arc::new(InMemoryTransactionRepository::new());
 
-    let payment_processor = PaymentProcessor::new(account_repository.clone());
+    let payment_processor = PaymentProcessor::new(account_repository.clone(), transaction_repository.clone());
 
     let processor_task = tokio::spawn(async move {
         while let Some(transaction) = receiver.recv().await {
